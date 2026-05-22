@@ -2,301 +2,273 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#8B4513">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
-    <title>EstoquePro - Controle de Estoque</title>
+    <title>MóveisEstoque - Controle de Estoque</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Tela de Login -->
     <div id="login-screen" class="screen">
-        <div class="login-container">
-            <div class="logo">
-                <h1>📦 EstoquePro</h1>
-                <p>Sistema de Controle de Estoque</p>
+        <div class="login-wrapper">
+            <div class="login-container">
+                <div class="login-header">
+                    <div class="login-icon">🪑</div>
+                    <h1>MóveisEstoque</h1>
+                    <p>Sistema Inteligente de Controle de Estoque para Móveis</p>
+                </div>
+
+                <form id="login-form" class="login-form">
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📧</span>
+                            <input type="email" id="email" value="admin@moveis.com" placeholder="seu@email.com" required>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="password">Senha</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="password" value="123456" placeholder="Sua senha" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword()" aria-label="Mostrar senha">👁️</button>
+                        </div>
+                    </div>
+
+                    <div class="login-options">
+                        <label class="remember-me">
+                            <input type="checkbox" id="remember" checked> Lembrar acesso
+                        </label>
+                    </div>
+
+                    <button type="submit" class="login-btn">
+                        <span class="btn-text">Entrar no Sistema</span>
+                        <span class="btn-loader hidden">Conectando...</span>
+                    </button>
+
+                    <button type="button" id="quick-demo-login" class="demo-login-btn">
+                        Entrar demo rápido
+                    </button>
+
+                    <div class="login-footer">
+                        <p>Demo: admin@moveis.com / 123456</p>
+                    </div>
+                </form>
             </div>
-            <form id="login-form" class="login-form">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" required placeholder="seu@email.com">
-                </div>
-                <div class="form-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="btn-primary">
-                    Entrar
-                </button>
-                <p class="demo-text">Demo: use qualquer email e senha</p>
-            </form>
         </div>
     </div>
 
-    <!-- App Principal -->
     <div id="app-screen" class="screen">
-        <!-- Sidebar Desktop -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
         <nav id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                <h2>📦 EstoquePro</h2>
+                <div class="sidebar-logo">
+                    <span class="logo-icon">🪑</span>
+                    <div>
+                        <h2>MóveisEstoque</h2>
+                        <p class="user-name" id="sidebar-username"></p>
+                    </div>
+                </div>
             </div>
+
             <ul class="nav-menu">
-                <li><a href="#" data-screen="dashboard" class="nav-link active">
-                    <span class="icon">📊</span> Dashboard
-                </a></li>
-                <li><a href="#" data-screen="products" class="nav-link">
-                    <span class="icon">📦</span> Produtos
-                </a></li>
-                <li><a href="#" data-screen="counting" class="nav-link counting-link">
-                    <span class="icon">📱</span> Contagem Rápida
-                </a></li>
-                <li><a href="#" data-screen="warehouse" class="nav-link">
-                    <span class="icon">🏗️</span> Endereçamento
-                </a></li>
-                <li><a href="#" data-screen="reports" class="nav-link">
-                    <span class="icon">📄</span> Relatórios
-                </a></li>
+                <li><a href="#" data-screen="dashboard" class="nav-link active"><span class="icon">📊</span><span>Dashboard</span></a></li>
+                <li><a href="#" data-screen="products" class="nav-link"><span class="icon">🛋️</span><span>Produtos</span></a></li>
+                <li><a href="#" data-screen="counting" class="nav-link"><span class="icon">📱</span><span>Contagem Rápida</span></a></li>
+                <li><a href="#" data-screen="warehouse" class="nav-link"><span class="icon">🏗️</span><span>Endereçamento</span></a></li>
+                <li><a href="#" data-screen="reports" class="nav-link"><span class="icon">📄</span><span>Relatórios</span></a></li>
             </ul>
+
             <div class="sidebar-footer">
-                <button id="logout-btn" class="btn-logout">
-                    🚪 Sair
-                </button>
+                <button id="logout-btn" class="logout-btn"><span>🚪</span><span>Sair do Sistema</span></button>
             </div>
         </nav>
 
-        <!-- Conteúdo Principal -->
         <main class="main-content">
-            <!-- Header Mobile -->
             <header class="mobile-header">
-                <button id="menu-toggle" class="btn-icon">☰</button>
-                <h1>EstoquePro</h1>
-                <button id="mobile-counting-btn" class="btn-icon">📱</button>
+                <button id="menu-toggle" class="header-btn" aria-label="Abrir menu"><span class="hamburger"></span></button>
+                <div class="header-title">
+                    <span class="header-icon">🪑</span>
+                    <h1>MóveisEstoque</h1>
+                </div>
+                <button id="quick-count-btn" class="header-btn" aria-label="Contagem rápida">📱</button>
             </header>
 
-            <!-- Dashboard -->
             <div id="dashboard-screen" class="screen-content active">
                 <div class="container">
-                    <div class="page-header">
-                        <h1>Dashboard</h1>
-                        <button onclick="navigateTo('counting')" class="btn-primary mobile-only">
-                            📱 Modo Contagem
-                        </button>
-                    </div>
-                    
-                    <!-- Cards de Estatísticas -->
-                    <div class="stats-grid" id="stats-grid">
-                        <!-- Gerado dinamicamente -->
+                    <div class="welcome-banner">
+                        <div class="welcome-text">
+                            <h1>Bem-vindo ao MóveisEstoque</h1>
+                            <p>Controle completo do seu estoque de móveis</p>
+                        </div>
+                        <button onclick="navigateTo('counting')" class="quick-action-btn"><span>📱</span><span>Iniciar Contagem</span></button>
                     </div>
 
-                    <!-- Lista de Produtos por Categoria -->
-                    <div id="products-by-category">
-                        <!-- Gerado dinamicamente -->
+                    <div class="stats-grid" id="stats-grid"></div>
+
+                    <div class="content-section">
+                        <h2>Produtos por Categoria</h2>
+                        <div id="products-by-category"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Produtos -->
             <div id="products-screen" class="screen-content">
                 <div class="container">
                     <div class="page-header">
-                        <h1>Produtos</h1>
-                        <button onclick="openProductModal()" class="btn-primary">
-                            + Novo Produto
-                        </button>
+                        <h1>Catálogo de Móveis</h1>
+                        <button onclick="openProductModal()" class="add-btn"><span>+</span> Novo Móvel</button>
                     </div>
 
-                    <!-- Filtros -->
                     <div class="filters">
-                        <input type="text" id="product-search" placeholder="🔍 Buscar produtos..." class="search-input">
-                        <select id="category-filter" class="filter-select">
-                            <option value="">Todas Categorias</option>
-                        </select>
+                        <div class="search-box"><span>🔍</span><input type="text" id="product-search" placeholder="Buscar móvel..."></div>
+                        <select id="category-filter" class="filter-select"><option value="">Todas Categorias</option></select>
                     </div>
 
-                    <!-- Tabela de Produtos -->
-                    <div class="table-container">
-                        <table id="products-table">
-                            <thead>
-                                <tr>
-                                    <th>Produto</th>
-                                    <th>SKU</th>
-                                    <th>Categoria</th>
-                                    <th>Quantidade</th>
-                                    <th>Endereço</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="products-tbody">
-                                <!-- Gerado dinamicamente -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <div id="products-grid" class="products-grid"></div>
                 </div>
             </div>
 
-            <!-- Contagem Rápida -->
             <div id="counting-screen" class="screen-content">
                 <div class="container">
-                    <div class="page-header">
-                        <h1>📱 Contagem Rápida</h1>
+                    <div class="page-header"><h1>📱 Contagem de Estoque</h1></div>
+
+                    <div id="counting-list-view">
+                        <div class="search-box mb-20"><span>🔍</span><input type="text" id="counting-search" placeholder="Buscar móvel para contagem..."></div>
+                        <div id="counting-product-list" class="counting-grid"></div>
                     </div>
 
-                    <!-- Busca -->
-                    <input type="text" id="counting-search" placeholder="🔍 Buscar por nome ou SKU..." class="search-input">
-
-                    <!-- Lista de Produtos para Contagem -->
-                    <div id="counting-product-list" class="counting-list">
-                        <!-- Gerado dinamicamente -->
-                    </div>
-
-                    <!-- Tela de Contagem Individual -->
-                    <div id="counting-screen-active" class="counting-active hidden">
-                        <!-- Gerado dinamicamente -->
-                    </div>
+                    <div id="counting-active-view" class="hidden"></div>
                 </div>
             </div>
 
-            <!-- Endereçamento -->
             <div id="warehouse-screen" class="screen-content">
                 <div class="container">
-                    <div class="page-header">
-                        <h1>🏗️ Endereçamento do Galpão</h1>
-                    </div>
+                    <div class="page-header"><h1>🏗️ Endereçamento do Depósito</h1></div>
 
-                    <!-- Configuração do Template -->
                     <div class="card">
-                        <h2>Configurar Estrutura</h2>
-                        <form id="warehouse-config-form">
+                        <h3>Configurar Estrutura</h3>
+                        <div class="form-grid">
                             <div class="form-group">
-                                <label>Nome do Galpão</label>
-                                <input type="text" id="warehouse-name" required placeholder="Ex: Galpão Principal">
+                                <label>Nome do Depósito</label>
+                                <input type="text" id="warehouse-name" placeholder="Ex: Depósito Central">
                             </div>
                             <div class="form-group">
-                                <label>Template de Endereçamento</label>
-                                <select id="address-template" class="filter-select">
-                                    <option value='["Rua", "Prédio", "Nível", "Vão"]'>Rua > Prédio > Nível > Vão</option>
-                                    <option value='["Corredor", "Estante", "Prateleira"]'>Corredor > Estante > Prateleira</option>
-                                    <option value='["Bloco", "Apartamento"]'>Bloco > Apartamento</option>
-                                    <option value='["Setor", "Rua", "Coluna"]'>Setor > Rua > Coluna</option>
+                                <label>Modelo de Endereçamento</label>
+                                <select id="address-template">
+                                    <option value="RUA-PREDIO-NIVEL">Rua > Prédio > Nível</option>
+                                    <option value="CORREDOR-ESTANTE-PRATELEIRA">Corredor > Estante > Prateleira</option>
+                                    <option value="SETOR-BLOCO-MODULO">Setor > Bloco > Módulo</option>
+                                    <option value="AREA-FILEIRA-POSICAO">Área > Fileira > Posição</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn-primary">
-                                Salvar Configuração
-                            </button>
-                        </form>
+                        </div>
+                        <button onclick="generateAddresses()" class="btn-primary">🎲 Gerar Endereços Automaticamente</button>
                     </div>
 
-                    <!-- Endereços -->
-                    <div class="card mt-4">
-                        <h2>Gerenciar Endereços</h2>
-                        <div class="address-actions">
-                            <button onclick="generateAddresses()" class="btn-secondary">
-                                🎲 Gerar Endereços Automaticamente
-                            </button>
-                        </div>
-                        <div id="addresses-list" class="addresses-grid">
-                            <!-- Gerado dinamicamente -->
-                        </div>
+                    <div class="card mt-20">
+                        <h3>Endereços do Depósito</h3>
+                        <div id="addresses-grid" class="addresses-grid"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Relatórios -->
             <div id="reports-screen" class="screen-content">
                 <div class="container">
-                    <div class="page-header">
-                        <h1>📄 Relatórios</h1>
-                    </div>
+                    <div class="page-header"><h1>📄 Relatórios</h1></div>
 
-                    <div class="card">
-                        <h2>Exportar Inventário</h2>
-                        <p>Gere um arquivo Excel com todos os produtos e seus endereços.</p>
-                        <button onclick="exportToExcel()" class="btn-primary">
-                            📥 Baixar Relatório Excel
-                        </button>
+                    <div class="report-cards">
+                        <div class="report-card">
+                            <div class="report-icon">📊</div>
+                            <h3>Inventário Completo</h3>
+                            <p>Relatório detalhado com todos os móveis, quantidades e localizações</p>
+                            <button onclick="exportToExcel('complete')" class="btn-download">📥 Baixar Excel</button>
+                        </div>
+                        <div class="report-card">
+                            <div class="report-icon">📍</div>
+                            <h3>Por Endereço</h3>
+                            <p>Relatório organizado por localização no depósito</p>
+                            <button onclick="exportToExcel('by_address')" class="btn-download">📥 Baixar Excel</button>
+                        </div>
+                        <div class="report-card">
+                            <div class="report-icon">🏷️</div>
+                            <h3>Por Categoria</h3>
+                            <p>Relatório agrupado por categoria de móveis</p>
+                            <button onclick="exportToExcel('by_category')" class="btn-download">📥 Baixar Excel</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Modal de Produto -->
     <div id="product-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeProductModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title">Novo Produto</h2>
-                <button onclick="closeProductModal()" class="btn-icon">✕</button>
+                <h2 id="modal-title">Cadastrar Móvel</h2>
+                <button onclick="closeProductModal()" class="close-btn" aria-label="Fechar">✕</button>
             </div>
-            <form id="product-form">
+            <form id="product-form" class="modal-form">
                 <input type="hidden" id="product-id">
+
                 <div class="form-group">
-                    <label>Nome do Produto</label>
-                    <input type="text" id="product-name" required>
+                    <label>Nome do Móvel</label>
+                    <input type="text" id="product-name" required placeholder="Ex: Sofá Retrátil 3 Lugares">
                 </div>
                 <div class="form-group">
-                    <label>SKU / Código</label>
-                    <input type="text" id="product-sku" required>
+                    <label>Código SKU</label>
+                    <input type="text" id="product-sku" required placeholder="Ex: SOF-001">
                 </div>
                 <div class="form-group">
                     <label>Categoria</label>
-                    <select id="product-category" required>
-                        <option value="">Selecione...</option>
-                    </select>
+                    <select id="product-category" required></select>
                 </div>
                 <div class="form-group">
-                    <label>Quantidade Inicial</label>
+                    <label>Quantidade em Estoque</label>
                     <input type="number" id="product-quantity" value="0" min="0">
                 </div>
                 <div class="form-group">
-                    <label>Endereço (opcional - preenchimento automático)</label>
-                    <select id="product-address">
-                        <option value="">Automático</option>
-                    </select>
+                    <label>Localização no Depósito</label>
+                    <select id="product-address"><option value="">Automática</option></select>
                 </div>
+                <div class="form-group">
+                    <label>Foto do Móvel</label>
+                    <div class="photo-options">
+                        <button type="button" onclick="takePhoto('camera')" class="photo-btn">📸 Câmera</button>
+                        <button type="button" onclick="takePhoto('gallery')" class="photo-btn">🖼️ Galeria</button>
+                    </div>
+                    <div id="photo-preview-container" class="photo-preview hidden">
+                        <img id="photo-preview-img" src="" alt="Preview">
+                        <button type="button" onclick="removePhoto()" class="remove-photo" aria-label="Remover foto">✕</button>
+                    </div>
+                    <input type="hidden" id="product-photo-url">
+                    <input type="hidden" id="product-photo-type">
+                </div>
+
                 <div class="modal-actions">
-                    <button type="button" onclick="closeProductModal()" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
+                    <button type="button" onclick="closeProductModal()" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-save">💾 Salvar Móvel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal de Câmera -->
-    <div id="camera-modal" class="modal hidden">
-        <div class="modal-content camera-modal">
-            <div class="modal-header">
-                <h2>📸 Foto da Etiqueta</h2>
-                <button onclick="closeCamera()" class="btn-icon">✕</button>
-            </div>
-            <div class="camera-container">
-                <video id="camera-video" autoplay playsinline></video>
-                <canvas id="camera-canvas" class="hidden"></canvas>
-            </div>
-            <div class="camera-actions">
-                <button onclick="takePhoto()" class="btn-primary">
-                    📸 Capturar
-                </button>
-                <button onclick="closeCamera()" class="btn-secondary">
-                    Cancelar
-                </button>
-            </div>
+    <div id="photo-viewer-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closePhotoViewer()"></div>
+        <div class="photo-viewer-content">
+            <button onclick="closePhotoViewer()" class="close-btn" aria-label="Fechar">✕</button>
+            <img id="photo-viewer-img" src="" alt="Foto do móvel">
         </div>
     </div>
 
-    <!-- Modal de Visualização de Foto -->
-    <div id="photo-modal" class="modal hidden">
-        <div class="modal-content photo-modal">
-            <div class="modal-header">
-                <h2>Foto do Produto</h2>
-                <button onclick="closePhotoModal()" class="btn-icon">✕</button>
-            </div>
-            <img id="photo-preview" src="" alt="Foto do produto">
-        </div>
-    </div>
-
-    <script src="js/database.js"></script>
-    <script src="js/excel.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

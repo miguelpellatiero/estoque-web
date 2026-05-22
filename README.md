@@ -1,10 +1,13 @@
-# EstoquePro
+# MóveisEstoque
 
-Projeto de controle de estoque com login, dashboard e funções de gerenciamento de produtos.
+Sistema de controle de estoque para móveis com Supabase, login, dashboard, produtos, contagem rápida, endereçamento e relatórios CSV.
 
-## Como usar
+## Configuração
 
-1. Abra o projeto no navegador.
-2. Faça login com:
-   - Email: `admin@teste.com`
-   - Senha: `123456`
+1. Crie um projeto gratuito em https://supabase.com.
+2. Execute o SQL de criação das tabelas no SQL Editor do Supabase.
+3. Copie o Project URL e a anon public key.
+4. Cole as credenciais em `js/config.js`.
+5. Abra `index.html` no navegador.
+
+Login demo: `admin@moveis.com` / `123456`
