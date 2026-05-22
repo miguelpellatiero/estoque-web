@@ -51,7 +51,7 @@
                     </button>
 
                     <button type="button" id="quick-demo-login" class="demo-login-btn">
-                        Entrar demo rápido
+                        Teste local neste aparelho
                     </button>
 
                     <div class="login-footer">
@@ -240,15 +240,13 @@
                 <div class="form-group">
                     <label>Foto do Móvel</label>
                     <div class="photo-options">
-                        <button type="button" onclick="takePhoto('camera')" class="photo-btn">📸 Câmera</button>
-                        <button type="button" onclick="takePhoto('gallery')" class="photo-btn">🖼️ Galeria</button>
+                        <button type="button" onclick="takePhoto('camera')" class="photo-btn">📸 Tirar foto</button>
+                        <button type="button" onclick="takePhoto('gallery')" class="photo-btn">🖼️ Selecionar várias</button>
                     </div>
-                    <div id="photo-preview-container" class="photo-preview hidden">
-                        <img id="photo-preview-img" src="" alt="Preview">
-                        <button type="button" onclick="removePhoto()" class="remove-photo" aria-label="Remover foto">✕</button>
-                    </div>
+                    <div id="photo-preview-container" class="photo-preview-grid hidden"></div>
                     <input type="hidden" id="product-photo-url">
                     <input type="hidden" id="product-photo-type">
+                    <input type="hidden" id="product-photos">
                 </div>
 
                 <div class="modal-actions">

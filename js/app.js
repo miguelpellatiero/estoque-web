@@ -2,6 +2,8 @@ let currentUser = null;
 let currentScreen = 'dashboard';
 let currentCountingProduct = null;
 let currentCountingQuantity = 0;
+let currentProductPhotos = [];
+let allowLocalLogin = false;
 let productsSubscription = null;
 let addressesSubscription = null;
 
@@ -22,7 +24,7 @@ function escapeHtml(value) {
 function checkLogin() {
     const savedUser = localStorage.getItem('moveis_user');
 
-    if (savedUser) {
+    if (savedUser && !db.demoMode) {
         currentUser = JSON.parse(savedUser);
         showApp();
         return;
@@ -61,6 +63,11 @@ async function handleLogin(event) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
+    if (db.demoMode && !allowLocalLogin) {
+        alert('Para salvar para todos os aparelhos, configure o Supabase em js/config.js. Use "Teste local neste aparelho" apenas para testar sem sincronizar.');
+        return;
+    }
+
     btnText.classList.add('hidden');
     btnLoader.classList.remove('hidden');
     btn.disabled = true;
@@ -76,17 +83,9 @@ async function handleLogin(event) {
 
         showApp();
     } catch (error) {
-        if (email === 'admin@moveis.com' && password === '123456' && !db.demoMode) {
-            db.enableDemoMode();
-            const user = await db.login(email, password);
-            currentUser = user;
-            localStorage.setItem('moveis_user', JSON.stringify(user));
-            showApp();
-            return;
-        }
-
         alert('Erro ao fazer login: ' + error.message);
     } finally {
+        allowLocalLogin = false;
         btnText.classList.remove('hidden');
         btnLoader.classList.add('hidden');
         btn.disabled = false;
@@ -95,6 +94,7 @@ async function handleLogin(event) {
 
 async function handleQuickDemoLogin() {
     db.enableDemoMode();
+    allowLocalLogin = true;
     document.getElementById('email').value = 'admin@moveis.com';
     document.getElementById('password').value = '123456';
     document.getElementById('remember').checked = true;
@@ -212,15 +212,16 @@ async function loadDashboard() {
             db.getCategories()
         ]);
 
-        const totalProducts = products.length;
         const totalQuantity = products.reduce((sum, product) => sum + (product.quantity || 0), 0);
+        const totalProducts = totalQuantity;
+        const registeredProducts = products.length;
         const withAddress = products.filter(product => product.address).length;
-        const withPhoto = products.filter(product => product.photo_url).length;
-        const withoutAddress = totalProducts - withAddress;
+        const withPhoto = products.filter(product => getProductPhotos(product).length > 0).length;
+        const withoutAddress = registeredProducts - withAddress;
 
         document.getElementById('stats-grid').innerHTML = `
             <div class="stat-card"><div class="stat-icon" style="background: #FFF0E0">🛋️</div><div class="stat-label">Total de Móveis</div><div class="stat-value">${totalProducts}</div></div>
-            <div class="stat-card"><div class="stat-icon" style="background: #E0FFE0">📦</div><div class="stat-label">Em Estoque</div><div class="stat-value">${totalQuantity}</div></div>
+            <div class="stat-card"><div class="stat-icon" style="background: #E0FFE0">📦</div><div class="stat-label">Produtos Cadastrados</div><div class="stat-value">${registeredProducts}</div></div>
             <div class="stat-card"><div class="stat-icon" style="background: #E0F0FF">📍</div><div class="stat-label">Localizados</div><div class="stat-value">${withAddress}</div></div>
             <div class="stat-card"><div class="stat-icon" style="background: #FFE0FF">📸</div><div class="stat-label">Com Foto</div><div class="stat-value">${withPhoto}</div></div>
             <div class="stat-card"><div class="stat-icon" style="background: #FFFFE0">⚠️</div><div class="stat-label">Sem Localização</div><div class="stat-value">${withoutAddress}</div></div>
@@ -251,8 +252,10 @@ async function loadDashboard() {
 }
 
 function productListCard(product) {
-    const photo = product.photo_url
-        ? `<img src="${escapeHtml(product.photo_url)}" class="product-thumbnail" alt="${escapeHtml(product.name)}">`
+    const photos = getProductPhotos(product);
+    const coverPhoto = photos[0];
+    const photo = coverPhoto
+        ? `<img src="${escapeHtml(coverPhoto)}" class="product-thumbnail" alt="${escapeHtml(product.name)}">`
         : '<div class="product-thumbnail-placeholder">🪑</div>';
 
     return `
@@ -300,8 +303,10 @@ function renderProducts(products) {
     }
 
     grid.innerHTML = products.map(product => {
-        const photo = product.photo_url
-            ? `<img src="${escapeHtml(product.photo_url)}" class="product-thumbnail" style="width: 100%; height: 150px;" alt="${escapeHtml(product.name)}">`
+        const photos = getProductPhotos(product);
+        const coverPhoto = photos[0];
+        const photo = coverPhoto
+            ? `<img src="${escapeHtml(coverPhoto)}" class="product-thumbnail" style="width: 100%; height: 150px;" alt="${escapeHtml(product.name)}">`
             : '<div class="product-thumbnail-placeholder" style="width: 100%; height: 150px; font-size: 48px;">🪑</div>';
 
         return `
@@ -318,7 +323,7 @@ function renderProducts(products) {
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 12px;">
                     <div class="quantity-badge">${product.quantity || 0} un</div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="photo-btn" onclick="event.stopPropagation(); viewPhoto('${escapeHtml(product.photo_url || '')}')" ${!product.photo_url ? 'disabled' : ''}>🔍</button>
+                        <button class="photo-btn" onclick="event.stopPropagation(); viewPhoto('${escapeHtml(coverPhoto || '')}')" ${!coverPhoto ? 'disabled' : ''}>🔍</button>
                         <button class="photo-btn" onclick="event.stopPropagation(); editProduct('${product.id}')">✏️</button>
                         <button class="photo-btn" onclick="event.stopPropagation(); deleteProduct('${product.id}')" style="color: var(--danger);">🗑️</button>
                     </div>
@@ -352,9 +357,11 @@ async function openProductModal(productId = null) {
 
     document.getElementById('product-form').reset();
     document.getElementById('product-id').value = '';
-    document.getElementById('photo-preview-container').classList.add('hidden');
+    currentProductPhotos = [];
+    renderPhotoPreviews();
     document.getElementById('product-photo-url').value = '';
     document.getElementById('product-photo-type').value = '';
+    document.getElementById('product-photos').value = '[]';
 
     const [categories, addresses] = await Promise.all([
         db.getCategories(),
@@ -390,11 +397,13 @@ async function openProductModal(productId = null) {
             document.getElementById('product-quantity').value = product.quantity || 0;
             document.getElementById('product-address').value = product.address || '';
 
-            if (product.photo_url) {
-                document.getElementById('product-photo-url').value = product.photo_url;
+            currentProductPhotos = getProductPhotos(product);
+            renderPhotoPreviews();
+
+            if (currentProductPhotos.length > 0) {
+                document.getElementById('product-photo-url').value = currentProductPhotos[0];
                 document.getElementById('product-photo-type').value = product.photo_type || '';
-                document.getElementById('photo-preview-img').src = product.photo_url;
-                document.getElementById('photo-preview-container').classList.remove('hidden');
+                document.getElementById('product-photos').value = JSON.stringify(currentProductPhotos);
             }
         }
     } else {
@@ -418,7 +427,8 @@ async function handleProductSubmit(event) {
         category: document.getElementById('product-category').value,
         quantity: parseInt(document.getElementById('product-quantity').value, 10) || 0,
         address: document.getElementById('product-address').value || null,
-        photo_url: document.getElementById('product-photo-url').value || null,
+        photos: currentProductPhotos,
+        photo_url: currentProductPhotos[0] || null,
         photo_type: document.getElementById('product-photo-type').value || null
     };
 
@@ -468,36 +478,117 @@ function closePhotoViewer() {
     document.getElementById('photo-viewer-modal').classList.add('hidden');
 }
 
+function getProductPhotos(product) {
+    if (!product) return [];
+
+    if (Array.isArray(product.photos)) {
+        return product.photos.filter(Boolean);
+    }
+
+    if (typeof product.photos === 'string' && product.photos.trim()) {
+        try {
+            const parsed = JSON.parse(product.photos);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch (error) {
+            console.warn('Fotos inválidas no produto:', error);
+        }
+    }
+
+    return product.photo_url ? [product.photo_url] : [];
+}
+
 function takePhoto(type) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    if (type === 'camera') input.capture = 'environment';
+    input.multiple = type === 'gallery';
+    if (type === 'camera') {
+        input.capture = 'environment';
+    }
 
-    input.onchange = event => {
-        const file = event.target.files[0];
-        if (file) processPhotoFile(file, type);
+    input.onchange = async event => {
+        const files = Array.from(event.target.files || []);
+        if (files.length > 0) await processPhotoFiles(files, type);
     };
 
     input.click();
 }
 
-function processPhotoFile(file, type) {
-    const reader = new FileReader();
-    reader.onload = event => {
-        const url = event.target.result;
-        document.getElementById('photo-preview-img').src = url;
-        document.getElementById('photo-preview-container').classList.remove('hidden');
-        document.getElementById('product-photo-url').value = url;
-        document.getElementById('product-photo-type').value = type;
-    };
-    reader.readAsDataURL(file);
+async function processPhotoFiles(files, type) {
+    for (const file of files) {
+        const photo = await compressImageFile(file);
+        currentProductPhotos.push(photo);
+    }
+
+    document.getElementById('product-photo-type').value = type;
+    renderPhotoPreviews();
 }
 
-function removePhoto() {
-    document.getElementById('photo-preview-container').classList.add('hidden');
-    document.getElementById('product-photo-url').value = '';
-    document.getElementById('product-photo-type').value = '';
+function renderPhotoPreviews() {
+    const container = document.getElementById('photo-preview-container');
+    const photoInput = document.getElementById('product-photo-url');
+    const photosInput = document.getElementById('product-photos');
+
+    if (!container) return;
+
+    if (currentProductPhotos.length === 0) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        if (photoInput) photoInput.value = '';
+        if (photosInput) photosInput.value = '[]';
+        return;
+    }
+
+    container.classList.remove('hidden');
+    container.innerHTML = currentProductPhotos.map((photo, index) => `
+        <div class="photo-preview-item">
+            <img src="${escapeHtml(photo)}" alt="Foto ${index + 1}">
+            <button type="button" onclick="removePhoto(${index})" class="remove-photo" aria-label="Remover foto">✕</button>
+        </div>
+    `).join('');
+
+    if (photoInput) photoInput.value = currentProductPhotos[0] || '';
+    if (photosInput) photosInput.value = JSON.stringify(currentProductPhotos);
+}
+
+function removePhoto(index = null) {
+    if (index === null) {
+        currentProductPhotos = [];
+    } else {
+        currentProductPhotos.splice(index, 1);
+    }
+
+    renderPhotoPreviews();
+}
+
+function compressImageFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onerror = () => reject(new Error('Não foi possível ler a foto.'));
+        reader.onload = () => {
+            const image = new Image();
+
+            image.onerror = () => reject(new Error('Não foi possível abrir a foto.'));
+            image.onload = () => {
+                const maxSize = 1280;
+                const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+                const width = Math.round(image.width * scale);
+                const height = Math.round(image.height * scale);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                canvas.width = width;
+                canvas.height = height;
+                context.drawImage(image, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.72));
+            };
+
+            image.src = reader.result;
+        };
+
+        reader.readAsDataURL(file);
+    });
 }
 
 async function loadCounting() {
@@ -522,8 +613,10 @@ function renderCountingList(products) {
     }
 
     list.innerHTML = products.map(product => {
-        const photo = product.photo_url
-            ? `<img src="${escapeHtml(product.photo_url)}" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover;" alt="${escapeHtml(product.name)}">`
+        const photos = getProductPhotos(product);
+        const coverPhoto = photos[0];
+        const photo = coverPhoto
+            ? `<img src="${escapeHtml(coverPhoto)}" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover;" alt="${escapeHtml(product.name)}">`
             : '<div style="width: 56px; height: 56px; border-radius: 12px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 28px;">🪑</div>';
 
         return `
@@ -569,8 +662,10 @@ async function startCounting(productId) {
     document.getElementById('counting-list-view').classList.add('hidden');
 
     const view = document.getElementById('counting-active-view');
-    const photo = product.photo_url
-        ? `<img src="${escapeHtml(product.photo_url)}" style="width: 100px; height: 100px; border-radius: 16px; object-fit: cover; margin-bottom: 16px;" alt="${escapeHtml(product.name)}">`
+    const photos = getProductPhotos(product);
+    const coverPhoto = photos[0];
+    const photo = coverPhoto
+        ? `<img src="${escapeHtml(coverPhoto)}" style="width: 100px; height: 100px; border-radius: 16px; object-fit: cover; margin-bottom: 16px;" alt="${escapeHtml(product.name)}">`
         : '<div style="font-size: 64px; margin-bottom: 16px;">🪑</div>';
 
     view.innerHTML = `
@@ -630,21 +725,35 @@ function takeCountingPhoto(type) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.multiple = type === 'gallery';
     if (type === 'camera') input.capture = 'environment';
 
-    input.onchange = event => {
-        const file = event.target.files[0];
-        if (!file) return;
+    input.onchange = async event => {
+        const files = Array.from(event.target.files || []);
+        if (files.length === 0) return;
 
-        const reader = new FileReader();
-        reader.onload = async loadEvent => {
-            await db.updateProduct(currentCountingProduct.id, {
-                photo_url: loadEvent.target.result,
-                photo_type: type
-            });
-            alert('Foto do móvel atualizada!');
+        const existingPhotos = getProductPhotos(currentCountingProduct);
+        const newPhotos = [];
+
+        for (const file of files) {
+            newPhotos.push(await compressImageFile(file));
+        }
+
+        const photos = [...existingPhotos, ...newPhotos];
+        await db.updateProduct(currentCountingProduct.id, {
+            photos,
+            photo_url: photos[0] || null,
+            photo_type: type
+        });
+
+        currentCountingProduct = {
+            ...currentCountingProduct,
+            photos,
+            photo_url: photos[0] || null,
+            photo_type: type
         };
-        reader.readAsDataURL(file);
+
+        alert(`${newPhotos.length} foto(s) adicionada(s)!`);
     };
 
     input.click();
@@ -736,7 +845,7 @@ async function exportToExcel(type = 'complete') {
         let csv = '\uFEFF';
 
         if (type === 'by_category') {
-            csv += 'Categoria;Produto;SKU;Quantidade;Endereço;Foto\n';
+            csv += 'Categoria;Produto;SKU;Quantidade;Endereço;Fotos\n';
             [...products]
                 .sort((a, b) => (a.category || '').localeCompare(b.category || ''))
                 .forEach(product => {
@@ -746,11 +855,11 @@ async function exportToExcel(type = 'complete') {
                         product.sku,
                         product.quantity || 0,
                         product.address || 'Não localizado',
-                        product.photo_url || 'Sem foto'
+                        `${getProductPhotos(product).length} foto(s)`
                     ]);
                 });
         } else if (type === 'by_address') {
-            csv += 'Endereço;Produto;SKU;Categoria;Quantidade;Foto\n';
+            csv += 'Endereço;Produto;SKU;Categoria;Quantidade;Fotos\n';
             [...products]
                 .sort((a, b) => (a.address || 'ZZZ').localeCompare(b.address || 'ZZZ'))
                 .forEach(product => {
@@ -760,11 +869,11 @@ async function exportToExcel(type = 'complete') {
                         product.sku,
                         product.category || 'Sem categoria',
                         product.quantity || 0,
-                        product.photo_url || 'Sem foto'
+                        `${getProductPhotos(product).length} foto(s)`
                     ]);
                 });
         } else {
-            csv += 'Produto;SKU;Categoria;Quantidade;Endereço;Foto\n';
+            csv += 'Produto;SKU;Categoria;Quantidade;Endereço;Fotos\n';
             products.forEach(product => {
                 csv += csvLine([
                     product.name,
@@ -772,7 +881,7 @@ async function exportToExcel(type = 'complete') {
                     product.category || 'Sem categoria',
                     product.quantity || 0,
                     product.address || 'Não localizado',
-                    product.photo_url || 'Sem foto'
+                    `${getProductPhotos(product).length} foto(s)`
                 ]);
             });
         }
@@ -800,7 +909,7 @@ function showConnectionError(elementId) {
 
     element.innerHTML = `
         <p class="empty-state">
-            Não foi possível carregar os dados. Verifique as credenciais em js/config.js e a conexão com o Supabase.
+            Não foi possível carregar os dados. Para sincronizar entre celulares, configure o Supabase em js/config.js e execute supabase-schema.sql.
         </p>
     `;
 }

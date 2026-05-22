@@ -234,6 +234,12 @@ body {
     background: var(--bg);
 }
 
+.demo-login-btn::after {
+    content: ' - não sincroniza';
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
 .login-btn:hover,
 .btn-primary:hover,
 .add-btn:hover,
@@ -943,12 +949,29 @@ body {
     display: inline-block;
 }
 
-.photo-preview img {
+.photo-preview img,
+.photo-preview-grid img {
     width: 120px;
     height: 120px;
     object-fit: cover;
     border-radius: 12px;
     border: 2px solid var(--border);
+}
+
+.photo-preview-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px;
+}
+
+.photo-preview-item {
+    position: relative;
+}
+
+.photo-preview-grid img {
+    width: 100%;
+    height: 92px;
 }
 
 .remove-photo {

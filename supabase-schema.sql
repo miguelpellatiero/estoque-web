@@ -9,9 +9,12 @@ CREATE TABLE IF NOT EXISTS products (
     address TEXT,
     photo_url TEXT,
     photo_type TEXT,
+    photos JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS photos JSONB DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS categories (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
