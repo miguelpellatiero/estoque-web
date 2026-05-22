@@ -1,13 +1,24 @@
-# MóveisEstoque
+# MoveisEstoque
 
-Sistema de controle de estoque para móveis com Supabase, login, dashboard, produtos, contagem rápida, endereçamento e relatórios CSV.
+Aplicativo React + Supabase para controle de estoque de moveis, com sincronizacao em tempo real entre aparelhos, fotos multiplas, contagem rapida, enderecamento e relatorios CSV.
 
-## Configuração
+## Rodar localmente
 
-1. Crie um projeto gratuito em https://supabase.com.
-2. Execute o SQL de criação das tabelas no SQL Editor do Supabase.
-3. Copie o Project URL e a anon public key.
-4. Cole as credenciais em `js/config.js`.
-5. Abra `index.html` no navegador.
+```bash
+npm install
+npm run dev
+```
+
+## Supabase
+
+As credenciais estao em `.env.local`.
+
+Execute `supabase-schema.sql` no SQL Editor do Supabase antes de usar o login.
 
 Login demo: `admin@moveis.com` / `123456`
+
+## Build
+
+```bash
+npm run build
+```

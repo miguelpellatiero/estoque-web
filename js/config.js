@@ -1,6 +1,5 @@
 // Configuração do Supabase
-// Substitua pelos dados do seu projeto em Project Settings > API.
 const SUPABASE_CONFIG = {
-    url: 'https://SEU_PROJECT_ID.supabase.co',
-    anonKey: 'SEU_ANON_KEY'
+    url: 'https://klqlyvunffpcmkkcypdq.supabase.co',
+    anonKey: 'sb_publishable_P1q7tEGslV3VsgauWl2rWg_9K6H-VfD'
 };
