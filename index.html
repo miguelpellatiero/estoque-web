@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="manifest" href="manifest.json">
+    <title>EstoquePro - Controle de Estoque</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="login-screen" class="screen">
+        <div class="login-container">
+            <div class="logo">
+                <h1>📦 EstoquePro</h1>
+                <p>Sistema de Controle de Estoque</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">
+                    Entrar
+                </button>
+                <p class="demo-text">Demo: use qualquer email e senha</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Principal -->
+    <div id="app-screen" class="screen">
+        <!-- Sidebar Desktop -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>📦 EstoquePro</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" data-screen="dashboard" class="nav-link active">
+                    <span class="icon">📊</span> Dashboard
+                </a></li>
+                <li><a href="#" data-screen="products" class="nav-link">
+                    <span class="icon">📦</span> Produtos
+                </a></li>
+                <li><a href="#" data-screen="counting" class="nav-link counting-link">
+                    <span class="icon">📱</span> Contagem Rápida
+                </a></li>
+                <li><a href="#" data-screen="warehouse" class="nav-link">
+                    <span class="icon">🏗️</span> Endereçamento
+                </a></li>
+                <li><a href="#" data-screen="reports" class="nav-link">
+                    <span class="icon">📄</span> Relatórios
+                </a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn-logout">
+                    🚪 Sair
+                </button>
+            </div>
+        </nav>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Header Mobile -->
+            <header class="mobile-header">
+                <button id="menu-toggle" class="btn-icon">☰</button>
+                <h1>EstoquePro</h1>
+                <button id="mobile-counting-btn" class="btn-icon">📱</button>
+            </header>
+
+            <!-- Dashboard -->
+            <div id="dashboard-screen" class="screen-content active">
+                <div class="container">
+                    <div class="page-header">
+                        <h1>Dashboard</h1>
+                        <button onclick="navigateTo('counting')" class="btn-primary mobile-only">
+                            📱 Modo Contagem
+                        </button>
+                    </div>
+                    
+                    <!-- Cards de Estatísticas -->
+                    <div class="stats-grid" id="stats-grid">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+
+                    <!-- Lista de Produtos por Categoria -->
+                    <div id="products-by-category">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos -->
+            <div id="products-screen" class="screen-content">
+                <div class="container">
+                    <div class="page-header">
+                        <h1>Produtos</h1>
+                        <button onclick="openProductModal()" class="btn-primary">
+                            + Novo Produto
+                        </button>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="filters">
+                        <input type="text" id="product-search" placeholder="🔍 Buscar produtos..." class="search-input">
+                        <select id="category-filter" class="filter-select">
+                            <option value="">Todas Categorias</option>
+                        </select>
+                    </div>
+
+                    <!-- Tabela de Produtos -->
+                    <div class="table-container">
+                        <table id="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>SKU</th>
+                                    <th>Categoria</th>
+                                    <th>Quantidade</th>
+                                    <th>Endereço</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-tbody">
+                                <!-- Gerado dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contagem Rápida -->
+            <div id="counting-screen" class="screen-content">
+                <div class="container">
+                    <div class="page-header">
+                        <h1>📱 Contagem Rápida</h1>
+                    </div>
+
+                    <!-- Busca -->
+                    <input type="text" id="counting-search" placeholder="🔍 Buscar por nome ou SKU..." class="search-input">
+
+                    <!-- Lista de Produtos para Contagem -->
+                    <div id="counting-product-list" class="counting-list">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+
+                    <!-- Tela de Contagem Individual -->
+                    <div id="counting-screen-active" class="counting-active hidden">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Endereçamento -->
+            <div id="warehouse-screen" class="screen-content">
+                <div class="container">
+                    <div class="page-header">
+                        <h1>🏗️ Endereçamento do Galpão</h1>
+                    </div>
+
+                    <!-- Configuração do Template -->
+                    <div class="card">
+                        <h2>Configurar Estrutura</h2>
+                        <form id="warehouse-config-form">
+                            <div class="form-group">
+                                <label>Nome do Galpão</label>
+                                <input type="text" id="warehouse-name" required placeholder="Ex: Galpão Principal">
+                            </div>
+                            <div class="form-group">
+                                <label>Template de Endereçamento</label>
+                                <select id="address-template" class="filter-select">
+                                    <option value='["Rua", "Prédio", "Nível", "Vão"]'>Rua > Prédio > Nível > Vão</option>
+                                    <option value='["Corredor", "Estante", "Prateleira"]'>Corredor > Estante > Prateleira</option>
+                                    <option value='["Bloco", "Apartamento"]'>Bloco > Apartamento</option>
+                                    <option value='["Setor", "Rua", "Coluna"]'>Setor > Rua > Coluna</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                Salvar Configuração
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Endereços -->
+                    <div class="card mt-4">
+                        <h2>Gerenciar Endereços</h2>
+                        <div class="address-actions">
+                            <button onclick="generateAddresses()" class="btn-secondary">
+                                🎲 Gerar Endereços Automaticamente
+                            </button>
+                        </div>
+                        <div id="addresses-list" class="addresses-grid">
+                            <!-- Gerado dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relatórios -->
+            <div id="reports-screen" class="screen-content">
+                <div class="container">
+                    <div class="page-header">
+                        <h1>📄 Relatórios</h1>
+                    </div>
+
+                    <div class="card">
+                        <h2>Exportar Inventário</h2>
+                        <p>Gere um arquivo Excel com todos os produtos e seus endereços.</p>
+                        <button onclick="exportToExcel()" class="btn-primary">
+                            📥 Baixar Relatório Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Produto -->
+    <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Novo Produto</h2>
+                <button onclick="closeProductModal()" class="btn-icon">✕</button>
+            </div>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label>Nome do Produto</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label>SKU / Código</label>
+                    <input type="text" id="product-sku" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="product-category" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade Inicial</label>
+                    <input type="number" id="product-quantity" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Endereço (opcional - preenchimento automático)</label>
+                    <select id="product-address">
+                        <option value="">Automático</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeProductModal()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Câmera -->
+    <div id="camera-modal" class="modal hidden">
+        <div class="modal-content camera-modal">
+            <div class="modal-header">
+                <h2>📸 Foto da Etiqueta</h2>
+                <button onclick="closeCamera()" class="btn-icon">✕</button>
+            </div>
+            <div class="camera-container">
+                <video id="camera-video" autoplay playsinline></video>
+                <canvas id="camera-canvas" class="hidden"></canvas>
+            </div>
+            <div class="camera-actions">
+                <button onclick="takePhoto()" class="btn-primary">
+                    📸 Capturar
+                </button>
+                <button onclick="closeCamera()" class="btn-secondary">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização de Foto -->
+    <div id="photo-modal" class="modal hidden">
+        <div class="modal-content photo-modal">
+            <div class="modal-header">
+                <h2>Foto do Produto</h2>
+                <button onclick="closePhotoModal()" class="btn-icon">✕</button>
+            </div>
+            <img id="photo-preview" src="" alt="Foto do produto">
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/excel.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
