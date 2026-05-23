@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase, supabaseConfigError } from './supabaseClient';
 
 const LOGIN = {
   email: 'admin@moveis.com',
@@ -101,7 +101,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    if (!user) return undefined;
+    if (!user || !supabase) return undefined;
 
     loadAll();
 
@@ -441,6 +441,24 @@ export default function App() {
     link.download = `moveis_estoque_${type}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
+  }
+
+  if (supabaseConfigError) {
+    return (
+      <div className="login-screen">
+        <div className="login-card">
+          <div className="login-icon">ME</div>
+          <h1>MoveisEstoque</h1>
+          <p>O aplicativo precisa ser aberto pelo servidor do Vite.</p>
+          <div className="notice error">{supabaseConfigError}</div>
+          <div className="setup-steps">
+            <strong>Como abrir:</strong>
+            <code>npm.cmd install</code>
+            <code>npm.cmd run dev</code>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
