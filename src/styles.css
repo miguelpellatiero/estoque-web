@@ -239,20 +239,6 @@ main {
   color: var(--danger);
 }
 
-.setup-steps {
-  display: grid;
-  gap: 8px;
-}
-
-.setup-steps code {
-  display: block;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-}
-
 .toast {
   position: sticky;
   top: 12px;
