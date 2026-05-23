@@ -1,4 +1,4 @@
--- MóveisEstoque - esquema inicial do Supabase
+-- MoveisEstoque - esquema inicial do Supabase
 
 CREATE TABLE IF NOT EXISTS products (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -39,16 +39,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT INTO categories (name) VALUES
-('Sofás e Estofados'),
+('Sofas e Estofados'),
 ('Mesas e Cadeiras'),
-('Armários e Guarda-Roupas'),
-('Camas e Colchões'),
+('Armarios e Guarda-Roupas'),
+('Camas e Colchoes'),
 ('Estantes e Prateleiras'),
-('Móveis de Escritório'),
-('Móveis de Cozinha'),
-('Decoração e Acessórios'),
-('Móveis Infantis'),
-('Móveis para Área Externa')
+('Moveis de Escritorio'),
+('Moveis de Cozinha'),
+('Decoracao e Acessorios'),
+('Moveis Infantis'),
+('Moveis para Area Externa')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO users (email, password, name) VALUES

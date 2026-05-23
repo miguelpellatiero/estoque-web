@@ -17,6 +17,13 @@ const emptyProduct = {
   photo_type: '',
 };
 
+const EMPTY_ADDRESS = 'EMPTY';
+const OCCUPIED_ADDRESS = 'OCCUPIED';
+
+function normalizeText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 function getPhotos(product) {
   if (!product) return [];
   if (Array.isArray(product.photos)) return product.photos.filter(Boolean);
@@ -64,7 +71,13 @@ function csvLine(values) {
 export default function App() {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('moveis_user');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem('moveis_user');
+      return null;
+    }
   });
   const [login, setLogin] = useState(LOGIN);
   const [remember, setRemember] = useState(true);
@@ -84,6 +97,8 @@ export default function App() {
   const [countingQuantity, setCountingQuantity] = useState(0);
   const [warehouseName, setWarehouseName] = useState('');
   const [addressTemplate, setAddressTemplate] = useState('RUA-PREDIO-NIVEL');
+  const [isLoading, setIsLoading] = useState(false);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     if (!user) return undefined;
@@ -100,14 +115,25 @@ export default function App() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'addresses' }, loadAddresses)
       .subscribe();
 
+    const categoriesChannel = supabase
+      .channel('categories-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, loadCategories)
+      .subscribe();
+
     return () => {
       productsChannel.unsubscribe();
       addressesChannel.unsubscribe();
+      categoriesChannel.unsubscribe();
     };
   }, [user]);
 
   async function loadAll() {
-    await Promise.all([loadProducts(), loadCategories(), loadAddresses()]);
+    setIsLoading(true);
+    try {
+      await Promise.all([loadProducts(), loadCategories(), loadAddresses()]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function loadProducts() {
@@ -116,7 +142,7 @@ export default function App() {
       .select('*')
       .order('created_at', { ascending: false });
     if (error) {
-      alert('Erro ao carregar produtos: ' + error.message);
+      setNotice('Erro ao carregar produtos: ' + error.message);
       return;
     }
     setProducts(data || []);
@@ -125,7 +151,7 @@ export default function App() {
   async function loadCategories() {
     const { data, error } = await supabase.from('categories').select('*').order('name');
     if (error) {
-      alert('Erro ao carregar categorias: ' + error.message);
+      setNotice('Erro ao carregar categorias: ' + error.message);
       return;
     }
     setCategories(data || []);
@@ -134,7 +160,7 @@ export default function App() {
   async function loadAddresses() {
     const { data, error } = await supabase.from('addresses').select('*').order('full_address');
     if (error) {
-      alert('Erro ao carregar enderecos: ' + error.message);
+      setNotice('Erro ao carregar enderecos: ' + error.message);
       return;
     }
     setAddresses(data || []);
@@ -154,12 +180,14 @@ export default function App() {
     setLoginLoading(false);
 
     if (error || !data) {
-      alert('Email ou senha invalidos. Use admin@moveis.com / 123456 apos rodar o SQL no Supabase.');
+      setNotice('Email ou senha invalidos. Use admin@moveis.com / 123456 apos rodar o SQL no Supabase.');
       return;
     }
 
     setUser(data);
     if (remember) localStorage.setItem('moveis_user', JSON.stringify(data));
+    if (!remember) localStorage.removeItem('moveis_user');
+    setNotice('');
   }
 
   function logout() {
@@ -190,23 +218,25 @@ export default function App() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const term = search.toLowerCase();
+      const term = normalizeText(search);
       const matchesSearch =
         !term ||
-        product.name?.toLowerCase().includes(term) ||
-        product.sku?.toLowerCase().includes(term);
+        normalizeText(product.name).includes(term) ||
+        normalizeText(product.sku).includes(term) ||
+        normalizeText(product.address).includes(term);
       const matchesCategory = !categoryFilter || product.category === categoryFilter;
       return matchesSearch && matchesCategory;
     });
   }, [products, search, categoryFilter]);
 
   const countingProducts = useMemo(() => {
-    const term = countingSearch.toLowerCase();
+    const term = normalizeText(countingSearch);
     return products.filter((product) => {
       return (
         !term ||
-        product.name?.toLowerCase().includes(term) ||
-        product.sku?.toLowerCase().includes(term)
+        normalizeText(product.name).includes(term) ||
+        normalizeText(product.sku).includes(term) ||
+        normalizeText(product.address).includes(term)
       );
     });
   }, [products, countingSearch]);
@@ -226,6 +256,10 @@ export default function App() {
 
   async function saveProduct(event) {
     event.preventDefault();
+    const previousAddress = productForm.id
+      ? products.find((product) => product.id === productForm.id)?.address || null
+      : null;
+    const nextAddress = productForm.address || null;
 
     const photos = productForm.photos || [];
     const payload = {
@@ -247,22 +281,44 @@ export default function App() {
     const { error } = await request;
 
     if (error) {
-      alert('Erro ao salvar produto: ' + error.message);
+      setNotice('Erro ao salvar produto: ' + error.message);
       return;
     }
 
+    await syncAddressStatus(previousAddress, nextAddress);
     setModalOpen(false);
+    setNotice('Produto salvo com sucesso.');
     await loadProducts();
+    await loadAddresses();
   }
 
   async function deleteProduct(id) {
     if (!confirm('Tem certeza que deseja excluir este movel?')) return;
+    const product = products.find((item) => item.id === id);
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) {
-      alert('Erro ao excluir produto: ' + error.message);
+      setNotice('Erro ao excluir produto: ' + error.message);
       return;
     }
+    if (product?.address) await setAddressStatus(product.address, EMPTY_ADDRESS);
+    setNotice('Produto excluido com sucesso.');
     await loadProducts();
+    await loadAddresses();
+  }
+
+  async function setAddressStatus(fullAddress, status) {
+    if (!fullAddress) return;
+    const { error } = await supabase.from('addresses').update({ status }).eq('full_address', fullAddress);
+    if (error) setNotice('Produto salvo, mas nao foi possivel atualizar o endereco: ' + error.message);
+  }
+
+  async function syncAddressStatus(previousAddress, nextAddress) {
+    if (previousAddress && previousAddress !== nextAddress) {
+      await setAddressStatus(previousAddress, EMPTY_ADDRESS);
+    }
+    if (nextAddress) {
+      await setAddressStatus(nextAddress, OCCUPIED_ADDRESS);
+    }
   }
 
   async function addPhotos(files, type, target = 'form') {
@@ -287,7 +343,7 @@ export default function App() {
         .eq('id', countingProduct.id);
 
       if (error) {
-        alert('Erro ao salvar foto: ' + error.message);
+        setNotice('Erro ao salvar foto: ' + error.message);
         return;
       }
 
@@ -323,11 +379,12 @@ export default function App() {
       .eq('id', countingProduct.id);
 
     if (error) {
-      alert('Erro ao confirmar contagem: ' + error.message);
+      setNotice('Erro ao confirmar contagem: ' + error.message);
       return;
     }
 
     setCountingProduct(null);
+    setNotice('Contagem confirmada.');
     await loadProducts();
   }
 
@@ -340,15 +397,16 @@ export default function App() {
       full_address: parts
         .map((part, partIndex) => `${part.charAt(0)}${String(Math.floor(index / Math.pow(10, partIndex)) + 1).padStart(2, '0')}`)
         .join('-'),
-      status: 'EMPTY',
+      status: EMPTY_ADDRESS,
       warehouse_config: JSON.stringify({ name: warehouseName || 'Deposito Principal', template: addressTemplate }),
     }));
 
     const { error } = await supabase.from('addresses').insert(rows);
     if (error) {
-      alert('Erro ao gerar enderecos: ' + error.message);
+      setNotice('Erro ao gerar enderecos: ' + error.message);
       return;
     }
+    setNotice(`${count} enderecos gerados.`);
     await loadAddresses();
   }
 
@@ -392,6 +450,7 @@ export default function App() {
           <div className="login-icon">ME</div>
           <h1>MoveisEstoque</h1>
           <p>Sistema de controle de estoque para moveis</p>
+          {notice && <div className="notice error">{notice}</div>}
 
           <label>Email</label>
           <input value={login.email} onChange={(event) => setLogin({ ...login, email: event.target.value })} type="email" required />
@@ -438,10 +497,19 @@ export default function App() {
 
       <main>
         <header className="topbar">
-          <button className="icon-button" onClick={() => setSidebarOpen(true)}>☰</button>
+          <button className="icon-button" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">Menu</button>
           <h1>MoveisEstoque</h1>
-          <button className="icon-button" onClick={() => setScreen('counting')}>+</button>
+          <button className="icon-button" onClick={() => setScreen('counting')} aria-label="Iniciar contagem">+</button>
         </header>
+
+        {notice && (
+          <div className="toast" role="status">
+            <span>{notice}</span>
+            <button onClick={() => setNotice('')} aria-label="Fechar aviso">x</button>
+          </div>
+        )}
+
+        {isLoading && <div className="loading-bar" aria-label="Carregando dados" />}
 
         {screen === 'dashboard' && (
           <section className="page">
@@ -485,7 +553,7 @@ export default function App() {
             </div>
 
             <div className="filters">
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar movel..." />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por movel, SKU ou endereco..." />
               <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
                 <option value="">Todas Categorias</option>
                 {categories.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
@@ -496,6 +564,7 @@ export default function App() {
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} onEdit={() => openProductModal(product)} onDelete={() => deleteProduct(product.id)} onPhoto={setPhotoViewer} />
               ))}
+              {filteredProducts.length === 0 && <p className="empty">Nenhum produto encontrado.</p>}
             </div>
           </section>
         )}
@@ -505,9 +574,10 @@ export default function App() {
             <h2>Contagem de Estoque</h2>
             {!countingProduct ? (
               <>
-                <input className="wide-search" value={countingSearch} onChange={(event) => setCountingSearch(event.target.value)} placeholder="Buscar movel para contagem..." />
+                <input className="wide-search" value={countingSearch} onChange={(event) => setCountingSearch(event.target.value)} placeholder="Buscar movel, SKU ou endereco para contagem..." />
                 <div className="counting-list">
                   {countingProducts.map((product) => <ProductRow key={product.id} product={product} onClick={() => startCounting(product)} />)}
+                  {countingProducts.length === 0 && <p className="empty">Nenhum produto encontrado para contagem.</p>}
                 </div>
               </>
             ) : (
@@ -556,9 +626,9 @@ export default function App() {
             </div>
             <div className="addresses-grid">
               {addresses.map((address) => (
-                <div key={address.id} className={`address-card ${address.status === 'EMPTY' ? 'empty' : 'occupied'}`}>
+                <div key={address.id} className={`address-card ${address.status === EMPTY_ADDRESS ? 'empty' : 'occupied'}`}>
                   <strong>{address.full_address}</strong>
-                  <span>{address.status === 'EMPTY' ? 'Livre' : 'Ocupado'}</span>
+                  <span>{address.status === EMPTY_ADDRESS ? 'Livre' : 'Ocupado'}</span>
                 </div>
               ))}
             </div>
@@ -596,7 +666,7 @@ export default function App() {
         <div className="modal">
           <button className="modal-bg" onClick={() => setPhotoViewer('')} />
           <div className="photo-viewer">
-            <button className="close" onClick={() => setPhotoViewer('')}>×</button>
+            <button className="close" onClick={() => setPhotoViewer('')}>x</button>
             <img src={photoViewer} alt="Foto do movel" />
           </div>
         </div>
@@ -668,7 +738,7 @@ function ProductModal({ product, categories, addresses, onChange, onClose, onSav
       <form className="modal-card" onSubmit={onSave}>
         <div className="modal-title">
           <h2>{product.id ? 'Editar Movel' : 'Cadastrar Movel'}</h2>
-          <button type="button" className="close" onClick={onClose}>×</button>
+          <button type="button" className="close" onClick={onClose}>x</button>
         </div>
 
         <label>Nome do Movel<input value={product.name} onChange={(event) => update('name', event.target.value)} required /></label>
@@ -686,7 +756,9 @@ function ProductModal({ product, categories, addresses, onChange, onClose, onSav
           <select value={product.address} onChange={(event) => update('address', event.target.value)}>
             <option value="">Automatica</option>
             {product.address && <option value={product.address}>{product.address}</option>}
-            {addresses.filter((address) => address.status === 'EMPTY').map((address) => <option key={address.id} value={address.full_address}>{address.full_address}</option>)}
+            {addresses
+              .filter((address) => address.status === EMPTY_ADDRESS && address.full_address !== product.address)
+              .map((address) => <option key={address.id} value={address.full_address}>{address.full_address}</option>)}
           </select>
         </label>
 
@@ -700,7 +772,7 @@ function ProductModal({ product, categories, addresses, onChange, onClose, onSav
             {photos.map((photo, index) => (
               <div key={`${photo.slice(0, 20)}-${index}`}>
                 <img src={photo} alt={`Foto ${index + 1}`} />
-                <button type="button" onClick={() => onRemovePhoto(index)}>×</button>
+                <button type="button" onClick={() => onRemovePhoto(index)}>x</button>
               </div>
             ))}
           </div>
@@ -724,7 +796,10 @@ function FileButton({ label, capture = false, multiple = false, onFiles }) {
         accept="image/*"
         capture={capture ? 'environment' : undefined}
         multiple={multiple}
-        onChange={(event) => onFiles(event.target.files)}
+        onChange={(event) => {
+          onFiles(event.target.files);
+          event.target.value = '';
+        }}
       />
     </label>
   );

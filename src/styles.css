@@ -3,17 +3,17 @@
 }
 
 :root {
-  --primary: #8b4513;
-  --primary-dark: #6b3410;
-  --accent: #d2691e;
-  --bg: #fff8f0;
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --accent: #2563eb;
+  --bg: #f6f8fb;
   --paper: #ffffff;
-  --text: #2c1810;
-  --muted: #6b4423;
-  --border: #deb887;
-  --danger: #8b0000;
-  --success: #228b22;
-  --shadow: 0 2px 12px rgba(139, 69, 19, 0.12);
+  --text: #172033;
+  --muted: #667085;
+  --border: #d8dee8;
+  --danger: #b42318;
+  --success: #15803d;
+  --shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
 }
 
 body {
@@ -46,7 +46,7 @@ button {
   display: grid;
   gap: 14px;
   background: var(--paper);
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 30px;
   box-shadow: var(--shadow);
 }
@@ -61,7 +61,7 @@ button {
   width: 64px;
   height: 64px;
   margin: 0 auto;
-  border-radius: 16px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   background: var(--bg);
@@ -82,7 +82,7 @@ select {
   width: 100%;
   min-height: 44px;
   border: 2px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px 12px;
   background: var(--paper);
   color: var(--text);
@@ -92,7 +92,7 @@ input:focus,
 select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.12);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
 }
 
 .remember {
@@ -111,7 +111,7 @@ select:focus {
 .secondary,
 .file-button {
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 11px 16px;
   font-weight: 700;
   transition: 0.2s ease;
@@ -177,7 +177,7 @@ select:focus {
   min-height: 44px;
   text-align: left;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px 14px;
   background: transparent;
   color: var(--muted);
@@ -220,14 +220,86 @@ main {
   margin: 0;
 }
 
+.notice,
+.toast {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--text);
+}
+
+.notice {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.notice.error {
+  border-color: #fda29b;
+  background: #fff3f0;
+  color: var(--danger);
+}
+
+.toast {
+  position: sticky;
+  top: 12px;
+  z-index: 8;
+  width: min(720px, calc(100% - 32px));
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+
+.toast button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.loading-bar {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  height: 3px;
+  overflow: hidden;
+  background: #d9f2ee;
+}
+
+.loading-bar::after {
+  content: "";
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: var(--primary);
+  animation: loading-slide 1s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(240%);
+  }
+}
+
 .icon-button {
-  width: 42px;
+  min-width: 42px;
   height: 42px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--bg);
   color: var(--primary);
   font-weight: 900;
+  padding: 0 10px;
 }
 
 .page {
@@ -253,7 +325,7 @@ main {
   padding: 28px;
   color: white;
   background: linear-gradient(135deg, var(--primary), var(--accent));
-  border-radius: 16px;
+  border-radius: 8px;
   margin-bottom: 22px;
 }
 
@@ -277,7 +349,7 @@ main {
 .report-card,
 .address-card {
   background: var(--paper);
-  border-radius: 14px;
+  border-radius: 8px;
   box-shadow: var(--shadow);
 }
 
@@ -309,7 +381,7 @@ main {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--bg);
   color: var(--primary);
 }
@@ -323,7 +395,7 @@ main {
   margin-top: 8px;
   padding: 12px;
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: white;
   color: var(--text);
   text-align: left;
@@ -350,7 +422,7 @@ main {
 .cover {
   width: 54px;
   height: 54px;
-  border-radius: 10px;
+  border-radius: 8px;
   object-fit: cover;
   background: var(--bg);
   color: var(--primary);
@@ -362,7 +434,7 @@ main {
 .cover.large {
   width: 100%;
   height: 160px;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .counting-panel .cover.large {
@@ -458,7 +530,7 @@ main {
   width: 64px;
   height: 64px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 8px;
   font-size: 34px;
   font-weight: 900;
   color: white;
@@ -486,12 +558,12 @@ main {
 
 .address-card.empty {
   border-color: #90ee90;
-  background: #f0fff0;
+  background: #ecfdf3;
 }
 
 .address-card.occupied {
   border-color: #87ceeb;
-  background: #f0f8ff;
+  background: #eff6ff;
 }
 
 .modal {
@@ -520,7 +592,7 @@ main {
   display: grid;
   gap: 14px;
   padding: 22px;
-  border-radius: 16px;
+  border-radius: 8px;
   background: white;
 }
 
@@ -539,7 +611,7 @@ main {
   width: 36px;
   height: 36px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 8px;
   background: var(--bg);
   color: var(--danger);
   font-size: 24px;
@@ -568,7 +640,7 @@ main {
   width: 100%;
   height: 92px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .photo-grid button {
@@ -578,7 +650,7 @@ main {
   width: 26px;
   height: 26px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 8px;
   background: var(--danger);
   color: white;
 }
@@ -592,7 +664,7 @@ main {
 .photo-viewer img {
   max-width: 100%;
   max-height: 84dvh;
-  border-radius: 14px;
+  border-radius: 8px;
 }
 
 .photo-viewer .close {
