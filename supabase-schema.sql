@@ -52,7 +52,7 @@ INSERT INTO categories (name) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO users (email, password, name) VALUES
-('admin@moveis.com', '123456', 'Administrador')
+('miguel@mg.com', '1234', 'Miguel')
 ON CONFLICT (email) DO NOTHING;
 
 DO $$

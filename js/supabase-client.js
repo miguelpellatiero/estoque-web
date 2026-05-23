@@ -61,9 +61,9 @@ class SupabaseClient {
         this.saveLocal('users', [
             {
                 id: 'demo-user',
-                email: 'admin@moveis.com',
-                password: '123456',
-                name: 'Administrador'
+                email: 'miguel@mg.com',
+                password: '1234',
+                name: 'Miguel'
             }
         ]);
 
@@ -283,7 +283,7 @@ class SupabaseClient {
             );
 
             if (!user) {
-                throw new Error('Email ou senha inválidos. Use admin@moveis.com / 123456');
+                throw new Error('Email ou senha inválidos. Use miguel@mg.com / 1234');
             }
 
             return user;

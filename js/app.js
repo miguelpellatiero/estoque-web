@@ -95,8 +95,8 @@ async function handleLogin(event) {
 async function handleQuickDemoLogin() {
     db.enableDemoMode();
     allowLocalLogin = true;
-    document.getElementById('email').value = 'admin@moveis.com';
-    document.getElementById('password').value = '123456';
+    document.getElementById('email').value = 'miguel@mg.com';
+    document.getElementById('password').value = '1234';
     document.getElementById('remember').checked = true;
     document.getElementById('login-form').requestSubmit();
 }

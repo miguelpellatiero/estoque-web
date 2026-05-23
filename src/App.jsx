@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 const LOGIN = {
-  email: 'admin@moveis.com',
-  password: '123456',
+  email: 'miguel@mg.com',
+  password: '1234',
+  name: 'Miguel',
 };
 
 const emptyProduct = {
@@ -169,18 +170,33 @@ export default function App() {
   async function handleLogin(event) {
     event.preventDefault();
     setLoginLoading(true);
+    const normalizedEmail = login.email.trim().toLowerCase();
+    const isDefaultLogin = normalizedEmail === LOGIN.email && login.password === LOGIN.password;
 
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', login.email)
+      .eq('email', normalizedEmail)
       .eq('password', login.password)
       .single();
 
     setLoginLoading(false);
 
     if (error || !data) {
-      setNotice('Email ou senha invalidos. Use admin@moveis.com / 123456 apos rodar o SQL no Supabase.');
+      if (isDefaultLogin) {
+        const defaultUser = {
+          id: 'default-miguel',
+          email: LOGIN.email,
+          name: LOGIN.name,
+        };
+        setUser(defaultUser);
+        if (remember) localStorage.setItem('moveis_user', JSON.stringify(defaultUser));
+        if (!remember) localStorage.removeItem('moveis_user');
+        setNotice('');
+        return;
+      }
+
+      setNotice('Email ou senha invalidos. Use miguel@mg.com / 1234.');
       return;
     }
 
@@ -466,7 +482,7 @@ export default function App() {
           <button className="primary full" disabled={loginLoading}>
             {loginLoading ? 'Conectando...' : 'Entrar no Sistema'}
           </button>
-          <small>Login demo: admin@moveis.com / 123456</small>
+          <small>Login: miguel@mg.com / 1234</small>
         </form>
       </div>
     );
